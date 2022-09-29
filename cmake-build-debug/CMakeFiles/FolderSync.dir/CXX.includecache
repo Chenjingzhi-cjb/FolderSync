@@ -1,0 +1,28 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+C:/Users/12865/Desktop/FolderSync/FolderSync.hpp
+iostream
+-
+fstream
+-
+io.h
+-
+string
+-
+unordered_set
+-
+utility
+-
+
+C:/Users/12865/Desktop/FolderSync/main.cpp
+string
+-
+FolderSync.hpp
+C:/Users/12865/Desktop/FolderSync/FolderSync.hpp
+

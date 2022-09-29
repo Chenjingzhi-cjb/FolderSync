@@ -1,0 +1,3 @@
+C:/Users/12865/Desktop/FolderSync/cmake-build-debug/CMakeFiles/FolderSync.dir
+C:/Users/12865/Desktop/FolderSync/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/12865/Desktop/FolderSync/cmake-build-debug/CMakeFiles/rebuild_cache.dir
