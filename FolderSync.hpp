@@ -34,13 +34,13 @@ public:
 
 private:
     std::string m_src_path;
-    std::unordered_map<std::string, long> m_src_files;
+    std::unordered_map<std::string, long long> m_src_files;
 
     std::string m_dst_path;
-    std::unordered_map<std::string, long> m_dst_files;
+    std::unordered_map<std::string, long long> m_dst_files;
 
-    std::unordered_map<std::string, long> m_new_files;
-    std::unordered_map<std::string, long> m_old_files;
+    std::unordered_map<std::string, long long> m_new_files;
+    std::unordered_map<std::string, long long> m_old_files;
 
 public:
     void update() {
@@ -53,7 +53,6 @@ public:
 
         // create new files
         for (const auto &i : m_new_files) {
-            std::string cmd;
             system(("copy \"" + m_src_path + i.first + "\" \"" + m_dst_path + i.first + "\"").c_str());
         }
     }
@@ -98,10 +97,9 @@ private:
     }
 
     static
-    void get_files(const std::string &path, std::unordered_map<std::string, long> &files, int root_path_length) {
+    void get_files(const std::string &path, std::unordered_map<std::string, long long> &files, int root_path_length) {
         long file_handle;  // 文件句柄
         struct _finddata_t file_info{};  // 文件信息
-        struct _stat stat_info{};  // 文件状态信息
 
         std::string p;
         if ((file_handle = _findfirst(p.assign(path).append("\\*").c_str(), &file_info)) != -1) {
@@ -109,12 +107,12 @@ private:
                 if ((file_info.attrib & _A_SUBDIR)) {  // 表示文件夹
                     if (strcmp(file_info.name, ".") != 0 && strcmp(file_info.name, "..") != 0) {
                         p.assign(path).append("\\").append(file_info.name);
-                        get_files(p, files, root_path_length);  // 递归搜索
+                        get_files(p, files, root_path_length);  // 文件夹递归搜索
                     }
                 } else {  // (file_info.attrib & _A_SUBDIR) == 0，表示文件
                     p.assign(path).append("\\").append(file_info.name);
-                    _stat(p.c_str(), &stat_info);
-                    files.emplace(p.substr(root_path_length, p.length() - root_path_length), stat_info.st_size);
+                    // 存储 <文件名，修改时间> 键值对
+                    files.emplace(p.substr(root_path_length, p.length() - root_path_length), file_info.time_write);
                 }
             } while (_findnext(file_handle, &file_info) == 0);  // 处理下一个，存在则返回 0，否则返回 -1
             _findclose(file_handle);
