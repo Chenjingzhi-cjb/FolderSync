@@ -8,11 +8,11 @@ int main() {
     // TODO: GUI
 
     // 千万注意不要写反了！！！dst path 中的文件可能会被删除！！！
-    string src_path = R"(a)";
-    string dst_path = R"(b)";
+    string src_path = R"()";
+    string dst_path = R"()";
 
     FolderSync folder_sync(src_path, dst_path);
-    folder_sync.find_files_diff();
+    folder_sync.update();
 
     return 0;
 }
