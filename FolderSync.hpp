@@ -45,38 +45,84 @@ private:
 
 class FolderSync {
 public:
-    FolderSync(const std::string &src_path, const std::string &dst_path) {
-        initFolderSync(src_path, dst_path);
+    FolderSync(std::string src_path, std::string dst_path)
+        : m_src_path(std::move(src_path)) {
+          m_dst_paths.emplace_back(std::move(dst_path));
+        initSrcFolder();
     };
+
+    FolderSync(std::string src_path, std::vector<std::string> dst_paths)
+        : m_src_path(std::move(src_path)),
+          m_dst_paths(std::move(dst_paths)) {
+        initSrcFolder();
+    }
 
     ~FolderSync() = default;
 
 public:
+    /**
+     * @brief 查找 源文件夹 与 目标文件夹 的差异，并打印相关信息，不修改文件夹
+     *
+     * @return None
+     */
     void findDiff() {
-        findFilesDiff(m_src_folder, m_dst_folder, false);
+        for (const auto& dst_path : m_dst_paths) {
+            initDstFolder(dst_path);
+            std::cout << dst_path << "-----------------------------------------------------" << std::endl;
+            findFilesDiff(m_src_folder, m_dst_folder, false);
+        }
     }
 
+    /**
+     * @brief 查找 源文件夹 与 目标文件夹 的差异，并更新文件夹
+     *
+     * @return None
+     */
     void update() {
-        findFilesDiff(m_src_folder, m_dst_folder, true);
+        for (const auto& dst_path : m_dst_paths) {
+            initDstFolder(dst_path);
+            std::cout << dst_path << "-----------------------------------------------------" << std::endl;
+            findFilesDiff(m_src_folder, m_dst_folder, true);
+        }
     }
 
 private:
-    void initFolderSync(std::string src_path, std::string dst_path) {
-        if (src_path == dst_path) {
-            throw std::invalid_argument("initFolderSync(): The source and destination addresses must be different!");
-        }
-
+    /**
+     * @brief 初始化 源文件夹对象
+     *
+     * @return None
+     */
+    void initSrcFolder() {
         // 如果用户输入的目录地址不以'\'结尾，增加'\'结尾，FolderObj::m_path 均以'\'结尾
-        if (src_path.c_str()[-1] != '\\') src_path.append("\\");
+        if (m_src_path.c_str()[-1] != '\\') m_src_path.append("\\");
+        m_src_folder = FolderObj(m_src_path);
+        buildFolderTree(m_src_folder);
+    }
+
+    /**
+     * @brief 初始化 目标文件夹对象
+     * @param dst_path 目标文件路径
+     *
+     * @return None
+     */
+    void initDstFolder(std::string dst_path) {
         if (dst_path.c_str()[-1] != '\\') dst_path.append("\\");
 
-        m_src_folder = FolderObj(src_path);
-        m_dst_folder = FolderObj(dst_path);
+        if (m_src_path == dst_path) {
+            std::cout << "initFolderSync() Error: The source and destination addresses must be different!" << std::endl;
+            std::cout << "    error folder: " << dst_path << std::endl;
+        }
 
-        buildFolderTree(m_src_folder);
+        m_dst_folder = FolderObj(dst_path);
         buildFolderTree(m_dst_folder);
     }
 
+    /**
+     * @brief 以树形结构构建文件夹对象
+     * @param folder 文件夹对象
+     *
+     * @return None
+     */
     static void buildFolderTree(FolderObj &folder) {
         long file_handle;  // 文件句柄
         struct _finddata_t file_info{};  // 文件信息
@@ -100,6 +146,14 @@ private:
         }
     }
 
+    /**
+     * @brief 查找 两个文件夹对象中的 文件 和 子文件夹 的差异，并对 两个文件夹 的 同名子文件夹 进行递归查找
+     * @param src_folder 源文件夹对象
+     * @param dst_folder 目标文件夹对象
+     * @param is_operate 是否对 文件/文件夹 进行操作
+     *
+     * @return None
+     */
     static void findFilesDiff(FolderObj &src_folder, FolderObj &dst_folder, bool is_operate) {
         // 1. 查找旧文件
         auto _src_files = src_folder.m_files;
@@ -154,6 +208,15 @@ private:
         }
     }
 
+    /**
+     * @brief 新文件夹更改操作
+     * @param src_folder 源文件夹对象
+     * @param dst_folder 目标文件夹对象
+     * @param src_iter 源文件夹中的 新子文件夹对象 的迭代器
+     * @param is_operate 是否对 文件/文件夹 进行操作
+     *
+     * @return None
+     */
     inline static void
     newFolder(FolderObj &src_folder, FolderObj &dst_folder, std::vector<FolderObj>::iterator &src_iter, bool is_operate) {
         if (is_operate) {  // update()
@@ -165,6 +228,14 @@ private:
         }
     }
 
+    /**
+     * @brief 旧文件夹更改操作
+     * @param dst_folder 目标文件夹对象
+     * @param dst_iter 目标文件夹中的 旧子文件夹对象 的迭代器
+     * @param is_operate 是否对 文件/文件夹 进行操作
+     *
+     * @return None
+     */
     inline static void oldFolder(FolderObj &dst_folder, std::vector<FolderObj>::iterator &dst_iter, bool is_operate) {
         if (is_operate) {  // update()
             system(("rd /s /q \"" + dst_folder.getPath() + dst_iter->getName() + "\"").c_str());
@@ -174,6 +245,9 @@ private:
     }
 
 private:
+    std::string m_src_path;
+    std::vector<std::string> m_dst_paths;
+
     FolderObj m_src_folder;
     FolderObj m_dst_folder;
 };
