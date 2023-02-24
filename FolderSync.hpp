@@ -24,20 +24,12 @@ public:
 
     ~FolderObj() = default;
 
-    FolderObj(const FolderObj &) = default;
-
-    FolderObj &operator=(const FolderObj &) = default;
-
-    FolderObj(FolderObj &&) = default;
-
-    FolderObj &operator=(FolderObj &&) = default;
-
 public:
-    std::string getPath() {
+    std::string getPath() const {
         return m_path;
     }
 
-    std::string getName() {
+    std::string getName() const {
         return m_name;
     }
 
@@ -46,7 +38,7 @@ public:
     std::unordered_map<std::string, unsigned long> m_files{};
 
 private:
-    std::string m_path{};
+    std::string m_path{};  // 该属性以'\'结尾
     std::string m_name{};
 };
 
@@ -58,14 +50,6 @@ public:
     };
 
     ~FolderSync() = default;
-
-    FolderSync(const FolderSync &) = delete;
-
-    FolderSync &operator=(const FolderSync &) = delete;
-
-    FolderSync(FolderSync &&) = default;
-
-    FolderSync &operator=(FolderSync &&) = default;
 
 public:
     void findDiff() {
@@ -82,6 +66,7 @@ private:
             throw std::invalid_argument("initFolderSync(): The source and destination addresses must be different!");
         }
 
+        // 如果用户输入的目录地址不以'\'结尾，增加'\'结尾，FolderObj::m_path 均以'\'结尾
         if (src_path.c_str()[-1] != '\\') src_path.append("\\");
         if (dst_path.c_str()[-1] != '\\') dst_path.append("\\");
 
@@ -107,7 +92,7 @@ private:
                         folder.m_sub_folders.emplace_back(std::move(sub_folder));
                     }
                 } else {  // (file_info.attrib & _A_SUBDIR) == 0，表示文件
-                    // 存储 <文件名，修改时间> 键值对
+                    // 存储 <文件名，文件大小> 键值对
                     folder.m_files.emplace(file_info.name, file_info.size);
                 }
             } while (_findnext(file_handle, &file_info) == 0);  // 处理下一个，存在则返回 0，否则返回 -1
@@ -116,9 +101,8 @@ private:
     }
 
     static void findFilesDiff(FolderObj &src_folder, FolderObj &dst_folder, bool is_operate) {
+        // 1. 查找旧文件
         auto _src_files = src_folder.m_files;
-
-        // 1. 找出旧文件
         for (auto &dst_file : dst_folder.m_files) {
             auto src_file = _src_files.find(dst_file.first);
             if (src_file != src_folder.m_files.end() && src_file->second == dst_file.second) {
@@ -133,40 +117,59 @@ private:
             }
         }
 
-        // 2. 找出新文件
+        // 2. 查找新文件
         for (auto &i : _src_files) {
             if (is_operate) {  // update()
-                system(("copy \"" + src_folder.getPath() + i.first + "\" \"" + dst_folder.getPath() + i.first + "\"").c_str());
+                system(("copy \"" + src_folder.getPath() + i.first + "\" \"" + dst_folder.getPath() + i.first +
+                        "\"").c_str());
             } else {  // findDiff()
                 std::cout << "New files: " << src_folder.getPath() << i.first << std::endl;
             }
         }
         _src_files.clear();
 
-        // 递归
+        // 3. 子文件夹处理
         auto src_iter = src_folder.m_sub_folders.begin();
         auto dst_iter = dst_folder.m_sub_folders.begin();
-        for (; src_iter != src_folder.m_sub_folders.end() && dst_iter != dst_folder.m_sub_folders.end(); ) {
-            if (src_iter->getName() < dst_iter->getName()) {
-                if (is_operate) {  // update()
-                    system(("md \"" + dst_folder.getPath() + src_iter->getName() + "\"").c_str());
-                    system(("copy \"" + src_folder.getPath() + src_iter->getName() + "\" \"" + dst_folder.getPath() + src_iter->getName() + "\"").c_str());
-                } else {  // findDiff()
-                    std::cout << "New folder: " << src_iter->getPath() << std::endl;
-                }
-                src_iter++;
-            } else if (src_iter->getName() > dst_iter->getName()) {
-                if (is_operate) {  // update()
-                    system(("rd /s /q \"" + dst_folder.getPath() + dst_iter->getName() + "\"").c_str());
-                } else {  // findDiff()
-                    std::cout << "Old folder: " << dst_iter->getPath() << std::endl;
-                }
+        for (; src_iter != src_folder.m_sub_folders.end() || dst_iter != dst_folder.m_sub_folders.end();) {
+            if (src_iter == src_folder.m_sub_folders.end()) {
+                oldFolder(dst_folder, dst_iter, is_operate);
                 dst_iter++;
-            } else {  // src_iter->getName() == dst_iter->getName()
-                findFilesDiff(*src_iter, *dst_iter, is_operate);
+            } else if (dst_iter == dst_folder.m_sub_folders.end()) {
+                newFolder(src_folder, dst_folder, src_iter, is_operate);
                 src_iter++;
-                dst_iter++;
+            } else {  // src_iter != src_folder.m_sub_folders.end() && dst_iter != dst_folder.m_sub_folders.end()
+                if (src_iter->getName() > dst_iter->getName()) {
+                    oldFolder(dst_folder, dst_iter, is_operate);
+                    dst_iter++;
+                } else if (src_iter->getName() < dst_iter->getName()) {
+                    newFolder(src_folder, dst_folder, src_iter, is_operate);
+                    src_iter++;
+                } else {  // src_iter->getName() == dst_iter->getName() 递归
+                    findFilesDiff(*src_iter, *dst_iter, is_operate);
+                    src_iter++;
+                    dst_iter++;
+                }
             }
+        }
+    }
+
+    inline static void
+    newFolder(FolderObj &src_folder, FolderObj &dst_folder, std::vector<FolderObj>::iterator &src_iter, bool is_operate) {
+        if (is_operate) {  // update()
+            system(("md \"" + dst_folder.getPath() + src_iter->getName() + "\"").c_str());
+            system(("xcopy \"" + src_folder.getPath() + src_iter->getName() + "\" \"" + dst_folder.getPath() +
+                    src_iter->getName() + "\"" + "/S /E /Y").c_str());
+        } else {  // findDiff()
+            std::cout << "New folder: " << src_iter->getPath() << std::endl;
+        }
+    }
+
+    inline static void oldFolder(FolderObj &dst_folder, std::vector<FolderObj>::iterator &dst_iter, bool is_operate) {
+        if (is_operate) {  // update()
+            system(("rd /s /q \"" + dst_folder.getPath() + dst_iter->getName() + "\"").c_str());
+        } else {  // findDiff()
+            std::cout << "Old folder: " << dst_iter->getPath() << std::endl;
         }
     }
 
