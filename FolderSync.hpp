@@ -101,8 +101,8 @@ private:
 
     /**
      * @brief 初始化 目标文件夹对象
-     * @param dst_path 目标文件路径
      *
+     * @param dst_path 目标文件路径
      * @return None
      */
     void initDstFolder(std::string dst_path) {
@@ -119,8 +119,8 @@ private:
 
     /**
      * @brief 以树形结构构建文件夹对象
-     * @param folder 文件夹对象
      *
+     * @param folder 文件夹对象
      * @return None
      */
     static void buildFolderTree(FolderObj &folder) {
@@ -148,10 +148,12 @@ private:
 
     /**
      * @brief 查找 两个文件夹对象中的 文件 和 子文件夹 的差异，并对 两个文件夹 的 同名子文件夹 进行递归查找
+     *
+     * 调用 "del" 删除文件，调用 "copy" 复制文件
+     *
      * @param src_folder 源文件夹对象
      * @param dst_folder 目标文件夹对象
      * @param is_operate 是否对 文件/文件夹 进行操作
-     *
      * @return None
      */
     static void findFilesDiff(FolderObj &src_folder, FolderObj &dst_folder, bool is_operate) {
@@ -183,6 +185,9 @@ private:
         _src_files.clear();
 
         // 3. 子文件夹处理
+        // 使用双队列指针，利用 m_sub_folders 中的元素是按照 子文件夹名 从小到大排列的特点，
+        // 如果分别指向 src 和 dst 的子文件夹名不同，则必有 新子文件夹 或 旧子文件夹;
+        // 如果相同，则递归查找。
         auto src_iter = src_folder.m_sub_folders.begin();
         auto dst_iter = dst_folder.m_sub_folders.begin();
         for (; src_iter != src_folder.m_sub_folders.end() || dst_iter != dst_folder.m_sub_folders.end();) {
@@ -210,11 +215,13 @@ private:
 
     /**
      * @brief 新文件夹更改操作
+     *
+     * 调用 "md" 创建文件夹，调用 "xcopy /S /E /Y" 复制文件夹内容
+     *
      * @param src_folder 源文件夹对象
      * @param dst_folder 目标文件夹对象
      * @param src_iter 源文件夹中的 新子文件夹对象 的迭代器
      * @param is_operate 是否对 文件/文件夹 进行操作
-     *
      * @return None
      */
     inline static void
@@ -230,10 +237,12 @@ private:
 
     /**
      * @brief 旧文件夹更改操作
+     *
+     * 调用 "re /s /q" 删除文件夹
+     *
      * @param dst_folder 目标文件夹对象
      * @param dst_iter 目标文件夹中的 旧子文件夹对象 的迭代器
      * @param is_operate 是否对 文件/文件夹 进行操作
-     *
      * @return None
      */
     inline static void oldFolder(FolderObj &dst_folder, std::vector<FolderObj>::iterator &dst_iter, bool is_operate) {
