@@ -9,6 +9,7 @@
 #include <utility>
 #include <vector>
 #include <unordered_map>
+#include <algorithm>
 
 
 class FolderObj {
@@ -144,6 +145,11 @@ private:
             } while (_findnext(file_handle, &file_info) == 0);  // 处理下一个，存在则返回 0，否则返回 -1
             _findclose(file_handle);
         }
+
+        // 对子文件夹对象进行排序
+        std::sort(folder.m_sub_folders.begin(), folder.m_sub_folders.end(), [](FolderObj &a, FolderObj &b) {
+            return a.getName() < b.getName();
+        });
     }
 
     /**
