@@ -10,6 +10,7 @@
 #include <vector>
 #include <unordered_map>
 #include <algorithm>
+#include <windows.h>
 
 
 class FolderObj {
@@ -46,15 +47,17 @@ private:
 
 class FolderSync {
 public:
-    FolderSync(std::string src_path, std::string dst_path)
-        : m_src_path(std::move(src_path)) {
-          m_dst_paths.emplace_back(std::move(dst_path));
+    FolderSync(std::string src_path, std::string dst_path, bool W = false)
+            : m_src_path(std::move(src_path)),
+              m_W(W) {
+        m_dst_paths.emplace_back(std::move(dst_path));
         initSrcFolder();
     };
 
-    FolderSync(std::string src_path, std::vector<std::string> dst_paths)
-        : m_src_path(std::move(src_path)),
-          m_dst_paths(std::move(dst_paths)) {
+    FolderSync(std::string src_path, std::vector<std::string> dst_paths, bool W = false)
+            : m_src_path(std::move(src_path)),
+              m_dst_paths(std::move(dst_paths)),
+              m_W(W) {
         initSrcFolder();
     }
 
@@ -67,7 +70,7 @@ public:
      * @return None
      */
     void findDiff() {
-        for (const auto& dst_path : m_dst_paths) {
+        for (const auto &dst_path : m_dst_paths) {
             initDstFolder(dst_path);
             std::cout << dst_path << "-----------------------------------------------------" << std::endl;
             findFilesDiff(m_src_folder, m_dst_folder, false);
@@ -80,7 +83,7 @@ public:
      * @return None
      */
     void update() {
-        for (const auto& dst_path : m_dst_paths) {
+        for (const auto &dst_path : m_dst_paths) {
             initDstFolder(dst_path);
             std::cout << dst_path << "-----------------------------------------------------" << std::endl;
             findFilesDiff(m_src_folder, m_dst_folder, true);
@@ -96,8 +99,14 @@ private:
     void initSrcFolder() {
         // 如果用户输入的目录地址不以'\'结尾，增加'\'结尾，FolderObj::m_path 均以'\'结尾
         if (m_src_path.c_str()[-1] != '\\') m_src_path.append("\\");
+
         m_src_folder = FolderObj(m_src_path);
-        buildFolderTree(m_src_folder);
+
+        if (m_W) {
+            buildFolderTreeW(m_src_folder);
+        } else {  // !W
+            buildFolderTree(m_src_folder);
+        }
     }
 
     /**
@@ -115,7 +124,12 @@ private:
         }
 
         m_dst_folder = FolderObj(dst_path);
-        buildFolderTree(m_dst_folder);
+
+        if (m_W) {
+            buildFolderTreeW(m_dst_folder);
+        } else {  // !W
+            buildFolderTree(m_dst_folder);
+        }
     }
 
     /**
@@ -144,6 +158,42 @@ private:
                 }
             } while (_findnext(file_handle, &file_info) == 0);  // 处理下一个，存在则返回 0，否则返回 -1
             _findclose(file_handle);
+        }
+
+        // 对子文件夹对象进行排序
+        std::sort(folder.m_sub_folders.begin(), folder.m_sub_folders.end(), [](FolderObj &a, FolderObj &b) {
+            return a.getName() < b.getName();
+        });
+    }
+
+    /**
+     * @brief 以树形结构构建文件夹对象（宽字符）
+     *
+     * @param folder 文件夹对象
+     * @return None
+     */
+    static void buildFolderTreeW(FolderObj &folder) {
+        HANDLE file_handle;  // 文件句柄
+        WIN32_FIND_DATAW file_info;  // 文件信息
+
+        std::wstring folder_path = string2wstring(folder.getPath());
+        std::wstring p;
+        if ((file_handle = FindFirstFileW(p.assign(folder_path).append(L"*").c_str(), &file_info)) !=
+            INVALID_HANDLE_VALUE) {
+            do {
+                if ((file_info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {  // 表示子文件夹
+                    if (wcscmp(file_info.cFileName, L".") != 0 && wcscmp(file_info.cFileName, L"..") != 0) {
+                        FolderObj sub_folder(
+                                wstring2string(p.assign(folder_path).append(file_info.cFileName).append(L"\\")));
+                        buildFolderTreeW(sub_folder);  // 文件夹递归搜索
+                        folder.m_sub_folders.emplace_back(std::move(sub_folder));
+                    }
+                } else {  // (file_info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0，表示文件
+                    // 存储 <文件名，文件大小> 键值对
+                    folder.m_files.emplace(wstring2string(file_info.cFileName), file_info.nFileSizeLow);
+                }
+            } while (FindNextFileW(file_handle, &file_info) != 0);  // 处理下一个，存在则返回值不为 0
+            FindClose(file_handle);
         }
 
         // 对子文件夹对象进行排序
@@ -231,7 +281,8 @@ private:
      * @return None
      */
     inline static void
-    newFolder(FolderObj &src_folder, FolderObj &dst_folder, std::vector<FolderObj>::iterator &src_iter, bool is_operate) {
+    newFolder(FolderObj &src_folder, FolderObj &dst_folder, std::vector<FolderObj>::iterator &src_iter,
+              bool is_operate) {
         if (is_operate) {  // update()
             system(("md \"" + dst_folder.getPath() + src_iter->getName() + "\"").c_str());
             system(("xcopy \"" + src_folder.getPath() + src_iter->getName() + "\" \"" + dst_folder.getPath() +
@@ -259,12 +310,30 @@ private:
         }
     }
 
+    static std::wstring string2wstring(const std::string &str) {
+        int len = MultiByteToWideChar(CP_UTF8, 0, str.c_str(), -1, nullptr, 0);
+        std::wstring wstr(len, L'\0');
+        MultiByteToWideChar(CP_UTF8, 0, str.c_str(), -1, const_cast<wchar_t *>(wstr.data()), len);
+        wstr.resize(wcslen(wstr.c_str()));
+        return wstr;
+    }
+
+    static std::string wstring2string(const std::wstring &wstr) {
+        int len = WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, nullptr, 0, nullptr, nullptr);
+        std::string str(len, '\0');
+        WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, const_cast<char *>(str.data()), len, nullptr, nullptr);
+        str.resize(strlen(str.c_str()));
+        return str;
+    }
+
 private:
     std::string m_src_path;
     std::vector<std::string> m_dst_paths;
 
     FolderObj m_src_folder;
     FolderObj m_dst_folder;
+
+    bool m_W;
 };
 
 
