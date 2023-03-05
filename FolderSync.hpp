@@ -72,8 +72,9 @@ public:
     void findDiff() {
         for (const auto &dst_path : m_dst_paths) {
             initDstFolder(dst_path);
-            std::cout << dst_path << "-----------------------------------------------------" << std::endl;
+            std::cout << "--------" << dst_path << "--------" << std::endl;
             findFilesDiff(m_src_folder, m_dst_folder, false);
+            std::cout << "--------------------------------" << std::endl;
         }
     }
 
@@ -85,8 +86,9 @@ public:
     void update() {
         for (const auto &dst_path : m_dst_paths) {
             initDstFolder(dst_path);
-            std::cout << dst_path << "-----------------------------------------------------" << std::endl;
+            std::cout << "--------" << dst_path << "--------" << std::endl;
             findFilesDiff(m_src_folder, m_dst_folder, true);
+            std::cout << "--------------------------------" << std::endl;
         }
     }
 
