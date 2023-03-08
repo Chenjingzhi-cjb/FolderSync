@@ -1,23 +1,35 @@
 #include <string>
 #include "FolderSync.hpp"
 
+
 using namespace std;
 
 
 int main() {
     // TODO: GUI
 
-    // åƒä¸‡æ³¨æ„ä¸è¦å†™åäº†ï¼ï¼ï¼dst path ä¸­çš„æ–‡ä»¶å¯èƒ½ä¼šè¢«åˆ é™¤ï¼ï¼ï¼
+#if 1
+
+    // Ç§Íò×¢Òâ²»ÒªĞ´·´ÁË£¡£¡£¡dst path ÖĞµÄÎÄ¼ş¿ÉÄÜ»á±»É¾³ı£¡£¡£¡
     string src_path = R"(..\sample_folder\src)";
     string dst_path = R"(..\sample_folder\dst)";
     FolderSync folder_sync(src_path, dst_path);
 
-    // æ³¨æ„å…ˆåˆ›å»º dst1\ å’Œ dst2\ æ–‡ä»¶å¤¹
+    // ×¢ÒâÏÈ´´½¨ dst1\ ºÍ dst2\ ÎÄ¼ş¼Ğ
 //    string src_path = R"(..\sample_folder\src)";
 //    string dst_path1 = R"(..\sample_folder\dst1)";
 //    string dst_path2 = R"(..\sample_folder\dst2)";
 //    vector<string> dst_paths = { dst_path1, dst_path2 };
 //    FolderSync folder_sync(src_path, dst_paths);
+
+#else  // Ö§³ÖÖĞÎÄÂ·¾¶
+
+    // Ç§Íò×¢Òâ²»ÒªĞ´·´ÁË£¡£¡£¡dst path ÖĞµÄÎÄ¼ş¿ÉÄÜ»á±»É¾³ı£¡£¡£¡
+    string src_path = R"(..\sample_folder\Ô´)";
+    string dst_path = R"(..\sample_folder\Ä¿±ê)";
+    FolderSync folder_sync(src_path, dst_path, true);  // W - true£¬±íÊ¾Ê¹ÓÃ¿í×Ö·û
+
+#endif
 
     folder_sync.findDiff();
 //    folder_sync.update();

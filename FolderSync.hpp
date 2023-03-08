@@ -40,7 +40,7 @@ public:
     std::unordered_map<std::string, unsigned long> m_files{};
 
 private:
-    std::string m_path{};  // è¯¥å±æ€§ä»¥'\'ç»“å°¾
+    std::string m_path{};  // ¸ÃÊôĞÔÒÔ'\'½áÎ²
     std::string m_name{};
 };
 
@@ -65,28 +65,28 @@ public:
 
 public:
     /**
-     * @brief æŸ¥æ‰¾ æºæ–‡ä»¶å¤¹ ä¸ ç›®æ ‡æ–‡ä»¶å¤¹ çš„å·®å¼‚ï¼Œå¹¶æ‰“å°ç›¸å…³ä¿¡æ¯ï¼Œä¸ä¿®æ”¹æ–‡ä»¶å¤¹
+     * @brief ²éÕÒ Ô´ÎÄ¼ş¼Ğ Óë Ä¿±êÎÄ¼ş¼Ğ µÄ²îÒì£¬²¢´òÓ¡Ïà¹ØĞÅÏ¢£¬²»ĞŞ¸ÄÎÄ¼ş¼Ğ
      *
      * @return None
      */
     void findDiff() {
         for (const auto &dst_path : m_dst_paths) {
             initDstFolder(dst_path);
-            std::cout << "--------" << dst_path << "--------" << std::endl;
+            std::cout << "-------- " << dst_path << " --------" << std::endl;
             findFilesDiff(m_src_folder, m_dst_folder, false);
             std::cout << "--------------------------------" << std::endl;
         }
     }
 
     /**
-     * @brief æŸ¥æ‰¾ æºæ–‡ä»¶å¤¹ ä¸ ç›®æ ‡æ–‡ä»¶å¤¹ çš„å·®å¼‚ï¼Œå¹¶æ›´æ–°æ–‡ä»¶å¤¹
+     * @brief ²éÕÒ Ô´ÎÄ¼ş¼Ğ Óë Ä¿±êÎÄ¼ş¼Ğ µÄ²îÒì£¬²¢¸üĞÂÎÄ¼ş¼Ğ
      *
      * @return None
      */
     void update() {
         for (const auto &dst_path : m_dst_paths) {
             initDstFolder(dst_path);
-            std::cout << "--------" << dst_path << "--------" << std::endl;
+            std::cout << "-------- " << dst_path << " --------" << std::endl;
             findFilesDiff(m_src_folder, m_dst_folder, true);
             std::cout << "--------------------------------" << std::endl;
         }
@@ -94,15 +94,17 @@ public:
 
 private:
     /**
-     * @brief åˆå§‹åŒ– æºæ–‡ä»¶å¤¹å¯¹è±¡
+     * @brief ³õÊ¼»¯ Ô´ÎÄ¼ş¼Ğ¶ÔÏó
      *
      * @return None
      */
     void initSrcFolder() {
-        // å¦‚æœç”¨æˆ·è¾“å…¥çš„ç›®å½•åœ°å€ä¸ä»¥'\'ç»“å°¾ï¼Œå¢åŠ '\'ç»“å°¾ï¼ŒFolderObj::m_path å‡ä»¥'\'ç»“å°¾
+        // Èç¹ûÓÃ»§ÊäÈëµÄÄ¿Â¼µØÖ·²»ÒÔ'\'½áÎ²£¬Ôö¼Ó'\'½áÎ²£¬FolderObj::m_path ¾ùÒÔ'\'½áÎ²
         if (m_src_path.c_str()[-1] != '\\') m_src_path.append("\\");
 
         m_src_folder = FolderObj(m_src_path);
+
+        std::cout << m_src_path << std::endl;
 
         if (m_W) {
             buildFolderTreeW(m_src_folder);
@@ -112,9 +114,9 @@ private:
     }
 
     /**
-     * @brief åˆå§‹åŒ– ç›®æ ‡æ–‡ä»¶å¤¹å¯¹è±¡
+     * @brief ³õÊ¼»¯ Ä¿±êÎÄ¼ş¼Ğ¶ÔÏó
      *
-     * @param dst_path ç›®æ ‡æ–‡ä»¶è·¯å¾„
+     * @param dst_path Ä¿±êÎÄ¼şÂ·¾¶
      * @return None
      */
     void initDstFolder(std::string dst_path) {
@@ -135,92 +137,92 @@ private:
     }
 
     /**
-     * @brief ä»¥æ ‘å½¢ç»“æ„æ„å»ºæ–‡ä»¶å¤¹å¯¹è±¡
+     * @brief ÒÔÊ÷ĞÎ½á¹¹¹¹½¨ÎÄ¼ş¼Ğ¶ÔÏó
      *
-     * @param folder æ–‡ä»¶å¤¹å¯¹è±¡
+     * @param folder ÎÄ¼ş¼Ğ¶ÔÏó
      * @return None
      */
     static void buildFolderTree(FolderObj &folder) {
-        long file_handle;  // æ–‡ä»¶å¥æŸ„
-        struct _finddata_t file_info{};  // æ–‡ä»¶ä¿¡æ¯
+        long file_handle;  // ÎÄ¼ş¾ä±ú
+        struct _finddata_t file_info{};  // ÎÄ¼şĞÅÏ¢
 
         std::string folder_path = folder.getPath();
         std::string p;
         if ((file_handle = _findfirst(p.assign(folder_path).append("*").c_str(), &file_info)) != -1) {
             do {
-                if ((file_info.attrib & _A_SUBDIR)) {  // è¡¨ç¤ºå­æ–‡ä»¶å¤¹
+                if ((file_info.attrib & _A_SUBDIR)) {  // ±íÊ¾×ÓÎÄ¼ş¼Ğ
                     if (strcmp(file_info.name, ".") != 0 && strcmp(file_info.name, "..") != 0) {
                         FolderObj sub_folder(p.assign(folder_path).append(file_info.name).append("\\"));
-                        buildFolderTree(sub_folder);  // æ–‡ä»¶å¤¹é€’å½’æœç´¢
+                        buildFolderTree(sub_folder);  // ÎÄ¼ş¼Ğµİ¹éËÑË÷
                         folder.m_sub_folders.emplace_back(std::move(sub_folder));
                     }
-                } else {  // (file_info.attrib & _A_SUBDIR) == 0ï¼Œè¡¨ç¤ºæ–‡ä»¶
-                    // å­˜å‚¨ <æ–‡ä»¶åï¼Œæ–‡ä»¶å¤§å°> é”®å€¼å¯¹
+                } else {  // (file_info.attrib & _A_SUBDIR) == 0£¬±íÊ¾ÎÄ¼ş
+                    // ´æ´¢ <ÎÄ¼şÃû£¬ÎÄ¼ş´óĞ¡> ¼üÖµ¶Ô
                     folder.m_files.emplace(file_info.name, file_info.size);
                 }
-            } while (_findnext(file_handle, &file_info) == 0);  // å¤„ç†ä¸‹ä¸€ä¸ªï¼Œå­˜åœ¨åˆ™è¿”å› 0ï¼Œå¦åˆ™è¿”å› -1
+            } while (_findnext(file_handle, &file_info) == 0);  // ´¦ÀíÏÂÒ»¸ö£¬´æÔÚÔò·µ»Ø 0£¬·ñÔò·µ»Ø -1
             _findclose(file_handle);
         }
 
-        // å¯¹å­æ–‡ä»¶å¤¹å¯¹è±¡è¿›è¡Œæ’åº
+        // ¶Ô×ÓÎÄ¼ş¼Ğ¶ÔÏó½øĞĞÅÅĞò
         std::sort(folder.m_sub_folders.begin(), folder.m_sub_folders.end(), [](FolderObj &a, FolderObj &b) {
             return a.getName() < b.getName();
         });
     }
 
     /**
-     * @brief ä»¥æ ‘å½¢ç»“æ„æ„å»ºæ–‡ä»¶å¤¹å¯¹è±¡ï¼ˆå®½å­—ç¬¦ï¼‰
+     * @brief ÒÔÊ÷ĞÎ½á¹¹¹¹½¨ÎÄ¼ş¼Ğ¶ÔÏó£¨¿í×Ö·û£©
      *
-     * @param folder æ–‡ä»¶å¤¹å¯¹è±¡
+     * @param folder ÎÄ¼ş¼Ğ¶ÔÏó
      * @return None
      */
     static void buildFolderTreeW(FolderObj &folder) {
-        HANDLE file_handle;  // æ–‡ä»¶å¥æŸ„
-        WIN32_FIND_DATAW file_info;  // æ–‡ä»¶ä¿¡æ¯
+        HANDLE file_handle;  // ÎÄ¼ş¾ä±ú
+        WIN32_FIND_DATAW file_info;  // ÎÄ¼şĞÅÏ¢
 
         std::wstring folder_path = string2wstring(folder.getPath());
         std::wstring p;
         if ((file_handle = FindFirstFileW(p.assign(folder_path).append(L"*").c_str(), &file_info)) !=
             INVALID_HANDLE_VALUE) {
             do {
-                if ((file_info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {  // è¡¨ç¤ºå­æ–‡ä»¶å¤¹
+                if ((file_info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {  // ±íÊ¾×ÓÎÄ¼ş¼Ğ
                     if (wcscmp(file_info.cFileName, L".") != 0 && wcscmp(file_info.cFileName, L"..") != 0) {
                         FolderObj sub_folder(
                                 wstring2string(p.assign(folder_path).append(file_info.cFileName).append(L"\\")));
-                        buildFolderTreeW(sub_folder);  // æ–‡ä»¶å¤¹é€’å½’æœç´¢
+                        buildFolderTreeW(sub_folder);  // ÎÄ¼ş¼Ğµİ¹éËÑË÷
                         folder.m_sub_folders.emplace_back(std::move(sub_folder));
                     }
-                } else {  // (file_info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0ï¼Œè¡¨ç¤ºæ–‡ä»¶
-                    // å­˜å‚¨ <æ–‡ä»¶åï¼Œæ–‡ä»¶å¤§å°> é”®å€¼å¯¹
+                } else {  // (file_info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0£¬±íÊ¾ÎÄ¼ş
+                    // ´æ´¢ <ÎÄ¼şÃû£¬ÎÄ¼ş´óĞ¡> ¼üÖµ¶Ô
                     folder.m_files.emplace(wstring2string(file_info.cFileName), file_info.nFileSizeLow);
                 }
-            } while (FindNextFileW(file_handle, &file_info) != 0);  // å¤„ç†ä¸‹ä¸€ä¸ªï¼Œå­˜åœ¨åˆ™è¿”å›å€¼ä¸ä¸º 0
+            } while (FindNextFileW(file_handle, &file_info) != 0);  // ´¦ÀíÏÂÒ»¸ö£¬´æÔÚÔò·µ»ØÖµ²»Îª 0
             FindClose(file_handle);
         }
 
-        // å¯¹å­æ–‡ä»¶å¤¹å¯¹è±¡è¿›è¡Œæ’åº
+        // ¶Ô×ÓÎÄ¼ş¼Ğ¶ÔÏó½øĞĞÅÅĞò
         std::sort(folder.m_sub_folders.begin(), folder.m_sub_folders.end(), [](FolderObj &a, FolderObj &b) {
             return a.getName() < b.getName();
         });
     }
 
     /**
-     * @brief æŸ¥æ‰¾ ä¸¤ä¸ªæ–‡ä»¶å¤¹å¯¹è±¡ä¸­çš„ æ–‡ä»¶ å’Œ å­æ–‡ä»¶å¤¹ çš„å·®å¼‚ï¼Œå¹¶å¯¹ ä¸¤ä¸ªæ–‡ä»¶å¤¹ çš„ åŒåå­æ–‡ä»¶å¤¹ è¿›è¡Œé€’å½’æŸ¥æ‰¾
+     * @brief ²éÕÒ Á½¸öÎÄ¼ş¼Ğ¶ÔÏóÖĞµÄ ÎÄ¼ş ºÍ ×ÓÎÄ¼ş¼Ğ µÄ²îÒì£¬²¢¶Ô Á½¸öÎÄ¼ş¼Ğ µÄ Í¬Ãû×ÓÎÄ¼ş¼Ğ ½øĞĞµİ¹é²éÕÒ
      *
-     * è°ƒç”¨ "del" åˆ é™¤æ–‡ä»¶ï¼Œè°ƒç”¨ "copy" å¤åˆ¶æ–‡ä»¶
+     * µ÷ÓÃ "del" É¾³ıÎÄ¼ş£¬µ÷ÓÃ "copy" ¸´ÖÆÎÄ¼ş
      *
-     * @param src_folder æºæ–‡ä»¶å¤¹å¯¹è±¡
-     * @param dst_folder ç›®æ ‡æ–‡ä»¶å¤¹å¯¹è±¡
-     * @param is_operate æ˜¯å¦å¯¹ æ–‡ä»¶/æ–‡ä»¶å¤¹ è¿›è¡Œæ“ä½œ
+     * @param src_folder Ô´ÎÄ¼ş¼Ğ¶ÔÏó
+     * @param dst_folder Ä¿±êÎÄ¼ş¼Ğ¶ÔÏó
+     * @param is_operate ÊÇ·ñ¶Ô ÎÄ¼ş/ÎÄ¼ş¼Ğ ½øĞĞ²Ù×÷
      * @return None
      */
     static void findFilesDiff(FolderObj &src_folder, FolderObj &dst_folder, bool is_operate) {
-        // 1. æŸ¥æ‰¾æ—§æ–‡ä»¶
+        // 1. ²éÕÒ¾ÉÎÄ¼ş
         auto _src_files = src_folder.m_files;
         for (auto &dst_file : dst_folder.m_files) {
             auto src_file = _src_files.find(dst_file.first);
             if (src_file != src_folder.m_files.end() && src_file->second == dst_file.second) {
-                _src_files.erase(src_file);  // å»é™¤ç›¸åŒæ–‡ä»¶
+                _src_files.erase(src_file);  // È¥³ıÏàÍ¬ÎÄ¼ş
                 continue;
             }
 
@@ -231,7 +233,7 @@ private:
             }
         }
 
-        // 2. æŸ¥æ‰¾æ–°æ–‡ä»¶
+        // 2. ²éÕÒĞÂÎÄ¼ş
         for (auto &i : _src_files) {
             if (is_operate) {  // update()
                 system(("copy \"" + src_folder.getPath() + i.first + "\" \"" + dst_folder.getPath() + i.first +
@@ -242,10 +244,10 @@ private:
         }
         _src_files.clear();
 
-        // 3. å­æ–‡ä»¶å¤¹å¤„ç†
-        // ä½¿ç”¨åŒé˜Ÿåˆ—æŒ‡é’ˆï¼Œåˆ©ç”¨ m_sub_folders ä¸­çš„å…ƒç´ æ˜¯æŒ‰ç…§ å­æ–‡ä»¶å¤¹å ä»å°åˆ°å¤§æ’åˆ—çš„ç‰¹ç‚¹ï¼Œ
-        // å¦‚æœåˆ†åˆ«æŒ‡å‘ src å’Œ dst çš„å­æ–‡ä»¶å¤¹åä¸åŒï¼Œåˆ™å¿…æœ‰ æ–°å­æ–‡ä»¶å¤¹ æˆ– æ—§å­æ–‡ä»¶å¤¹;
-        // å¦‚æœç›¸åŒï¼Œåˆ™é€’å½’æŸ¥æ‰¾ã€‚
+        // 3. ×ÓÎÄ¼ş¼Ğ´¦Àí
+        // Ê¹ÓÃË«¶ÓÁĞÖ¸Õë£¬ÀûÓÃ m_sub_folders ÖĞµÄÔªËØÊÇ°´ÕÕ ×ÓÎÄ¼ş¼ĞÃû ´ÓĞ¡µ½´óÅÅÁĞµÄÌØµã£¬
+        // Èç¹û·Ö±ğÖ¸Ïò src ºÍ dst µÄ×ÓÎÄ¼ş¼ĞÃû²»Í¬£¬Ôò±ØÓĞ ĞÂ×ÓÎÄ¼ş¼Ğ »ò ¾É×ÓÎÄ¼ş¼Ğ;
+        // Èç¹ûÏàÍ¬£¬Ôòµİ¹é²éÕÒ¡£
         auto src_iter = src_folder.m_sub_folders.begin();
         auto dst_iter = dst_folder.m_sub_folders.begin();
         for (; src_iter != src_folder.m_sub_folders.end() || dst_iter != dst_folder.m_sub_folders.end();) {
@@ -262,7 +264,7 @@ private:
                 } else if (src_iter->getName() < dst_iter->getName()) {
                     newFolder(src_folder, dst_folder, src_iter, is_operate);
                     src_iter++;
-                } else {  // src_iter->getName() == dst_iter->getName() é€’å½’
+                } else {  // src_iter->getName() == dst_iter->getName() µİ¹é
                     findFilesDiff(*src_iter, *dst_iter, is_operate);
                     src_iter++;
                     dst_iter++;
@@ -272,14 +274,14 @@ private:
     }
 
     /**
-     * @brief æ–°æ–‡ä»¶å¤¹æ›´æ”¹æ“ä½œ
+     * @brief ĞÂÎÄ¼ş¼Ğ¸ü¸Ä²Ù×÷
      *
-     * è°ƒç”¨ "md" åˆ›å»ºæ–‡ä»¶å¤¹ï¼Œè°ƒç”¨ "xcopy /S /E /Y" å¤åˆ¶æ–‡ä»¶å¤¹å†…å®¹
+     * µ÷ÓÃ "md" ´´½¨ÎÄ¼ş¼Ğ£¬µ÷ÓÃ "xcopy /S /E /Y" ¸´ÖÆÎÄ¼ş¼ĞÄÚÈİ
      *
-     * @param src_folder æºæ–‡ä»¶å¤¹å¯¹è±¡
-     * @param dst_folder ç›®æ ‡æ–‡ä»¶å¤¹å¯¹è±¡
-     * @param src_iter æºæ–‡ä»¶å¤¹ä¸­çš„ æ–°å­æ–‡ä»¶å¤¹å¯¹è±¡ çš„è¿­ä»£å™¨
-     * @param is_operate æ˜¯å¦å¯¹ æ–‡ä»¶/æ–‡ä»¶å¤¹ è¿›è¡Œæ“ä½œ
+     * @param src_folder Ô´ÎÄ¼ş¼Ğ¶ÔÏó
+     * @param dst_folder Ä¿±êÎÄ¼ş¼Ğ¶ÔÏó
+     * @param src_iter Ô´ÎÄ¼ş¼ĞÖĞµÄ ĞÂ×ÓÎÄ¼ş¼Ğ¶ÔÏó µÄµü´úÆ÷
+     * @param is_operate ÊÇ·ñ¶Ô ÎÄ¼ş/ÎÄ¼ş¼Ğ ½øĞĞ²Ù×÷
      * @return None
      */
     inline static void
@@ -295,13 +297,13 @@ private:
     }
 
     /**
-     * @brief æ—§æ–‡ä»¶å¤¹æ›´æ”¹æ“ä½œ
+     * @brief ¾ÉÎÄ¼ş¼Ğ¸ü¸Ä²Ù×÷
      *
-     * è°ƒç”¨ "re /s /q" åˆ é™¤æ–‡ä»¶å¤¹
+     * µ÷ÓÃ "re /s /q" É¾³ıÎÄ¼ş¼Ğ
      *
-     * @param dst_folder ç›®æ ‡æ–‡ä»¶å¤¹å¯¹è±¡
-     * @param dst_iter ç›®æ ‡æ–‡ä»¶å¤¹ä¸­çš„ æ—§å­æ–‡ä»¶å¤¹å¯¹è±¡ çš„è¿­ä»£å™¨
-     * @param is_operate æ˜¯å¦å¯¹ æ–‡ä»¶/æ–‡ä»¶å¤¹ è¿›è¡Œæ“ä½œ
+     * @param dst_folder Ä¿±êÎÄ¼ş¼Ğ¶ÔÏó
+     * @param dst_iter Ä¿±êÎÄ¼ş¼ĞÖĞµÄ ¾É×ÓÎÄ¼ş¼Ğ¶ÔÏó µÄµü´úÆ÷
+     * @param is_operate ÊÇ·ñ¶Ô ÎÄ¼ş/ÎÄ¼ş¼Ğ ½øĞĞ²Ù×÷
      * @return None
      */
     inline static void oldFolder(FolderObj &dst_folder, std::vector<FolderObj>::iterator &dst_iter, bool is_operate) {
@@ -312,18 +314,30 @@ private:
         }
     }
 
+    /**
+     * @brief string ×ª wstring (gbk)
+     *
+     * @param str src string (gbk)
+     * @return dst wstring (gbk)
+     */
     static std::wstring string2wstring(const std::string &str) {
-        int len = MultiByteToWideChar(CP_UTF8, 0, str.c_str(), -1, nullptr, 0);
+        int len = MultiByteToWideChar(CP_ACP, 0, str.c_str(), -1, nullptr, 0);
         std::wstring wstr(len, L'\0');
-        MultiByteToWideChar(CP_UTF8, 0, str.c_str(), -1, const_cast<wchar_t *>(wstr.data()), len);
+        MultiByteToWideChar(CP_ACP, 0, str.c_str(), -1, const_cast<wchar_t *>(wstr.data()), len);
         wstr.resize(wcslen(wstr.c_str()));
         return wstr;
     }
 
+    /**
+     * @brief wstring ×ª string (gbk)
+     *
+     * @param wstr src wstring (gbk)
+     * @return dst string (gbk)
+     */
     static std::string wstring2string(const std::wstring &wstr) {
-        int len = WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, nullptr, 0, nullptr, nullptr);
+        int len = WideCharToMultiByte(CP_ACP, 0, wstr.c_str(), -1, nullptr, 0, nullptr, nullptr);
         std::string str(len, '\0');
-        WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, const_cast<char *>(str.data()), len, nullptr, nullptr);
+        WideCharToMultiByte(CP_ACP, 0, wstr.c_str(), -1, const_cast<char *>(str.data()), len, nullptr, nullptr);
         str.resize(strlen(str.c_str()));
         return str;
     }
