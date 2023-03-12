@@ -229,7 +229,7 @@ private:
             if (is_operate) {  // update()
                 system(("del \"" + dst_folder.getPath() + dst_file.first + "\"").c_str());
             } else {  // findDiff()
-                std::cout << "Old files: " << dst_folder.getPath() << dst_file.first << std::endl;
+                std::cout << "Old file: " << dst_folder.getPath() << dst_file.first << std::endl;
             }
         }
 
@@ -239,7 +239,7 @@ private:
                 system(("copy \"" + src_folder.getPath() + i.first + "\" \"" + dst_folder.getPath() + i.first +
                         "\"").c_str());
             } else {  // findDiff()
-                std::cout << "New files: " << src_folder.getPath() << i.first << std::endl;
+                std::cout << "New file: " << src_folder.getPath() << i.first << std::endl;
             }
         }
         _src_files.clear();
