@@ -72,10 +72,12 @@ public:
     void findDiff() {
         for (const auto &dst_path : m_dst_paths) {
             initDstFolder(dst_path);
-            std::cout << "-------- " << dst_path << " --------" << std::endl;
+            std::cout << "-------- dst path: " << dst_path << " --------" << std::endl;
             findFilesDiff(m_src_folder, m_dst_folder, false);
-            std::cout << "--------------------------------" << std::endl;
+            std::cout << "---------------- check succeeded ----------------\n" << std::endl;
         }
+
+        std::cout << "All check completed!\n" << std::endl;
     }
 
     /**
@@ -86,10 +88,12 @@ public:
     void update() {
         for (const auto &dst_path : m_dst_paths) {
             initDstFolder(dst_path);
-            std::cout << "-------- " << dst_path << " --------" << std::endl;
+            std::cout << "-------- dst path: " << dst_path << " --------" << std::endl;
             findFilesDiff(m_src_folder, m_dst_folder, true);
-            std::cout << "--------------------------------" << std::endl;
+            std::cout << "---------------- update succeeded ----------------\n" << std::endl;
         }
+
+        std::cout << "All update completed!\n" << std::endl;
     }
 
 private:
@@ -104,7 +108,7 @@ private:
 
         m_src_folder = FolderObj(m_src_path);
 
-        std::cout << m_src_path << std::endl;
+        std::cout << "\n" << "-> src path: " << m_src_path << "\n" << std::endl;
 
         if (m_W) {
             buildFolderTreeW(m_src_folder);
@@ -124,7 +128,7 @@ private:
 
         if (m_src_path == dst_path) {
             std::cout << "initFolderSync() Error: The source and destination addresses must be different!" << std::endl;
-            std::cout << "    error folder: " << dst_path << std::endl;
+            std::cout << "    error folder: " << dst_path << "\n" << std::endl;
         }
 
         m_dst_folder = FolderObj(dst_path);
@@ -228,6 +232,7 @@ private:
 
             if (is_operate) {  // update()
                 system(("del \"" + dst_folder.getPath() + dst_file.first + "\"").c_str());
+                std::cout << "Deleted file: " << dst_folder.getPath() << dst_file.first << std::endl;
             } else {  // findDiff()
                 std::cout << "Old file: " << dst_folder.getPath() << dst_file.first << std::endl;
             }
@@ -238,6 +243,7 @@ private:
             if (is_operate) {  // update()
                 system(("copy \"" + src_folder.getPath() + i.first + "\" \"" + dst_folder.getPath() + i.first +
                         "\"").c_str());
+                std::cout << "Added file: " << dst_folder.getPath() << i.first << std::endl;
             } else {  // findDiff()
                 std::cout << "New file: " << src_folder.getPath() << i.first << std::endl;
             }
@@ -291,6 +297,7 @@ private:
             system(("md \"" + dst_folder.getPath() + src_iter->getName() + "\"").c_str());
             system(("xcopy \"" + src_folder.getPath() + src_iter->getName() + "\" \"" + dst_folder.getPath() +
                     src_iter->getName() + "\"" + "/S /E /Y").c_str());
+            std::cout << "Added folder: " << dst_folder.getPath() << src_iter->getName() << "\\" << std::endl;
         } else {  // findDiff()
             std::cout << "New folder: " << src_iter->getPath() << std::endl;
         }
@@ -309,6 +316,7 @@ private:
     inline static void oldFolder(FolderObj &dst_folder, std::vector<FolderObj>::iterator &dst_iter, bool is_operate) {
         if (is_operate) {  // update()
             system(("rd /s /q \"" + dst_folder.getPath() + dst_iter->getName() + "\"").c_str());
+            std::cout << "Deleted folder: " << dst_iter->getPath() << std::endl;
         } else {  // findDiff()
             std::cout << "Old folder: " << dst_iter->getPath() << std::endl;
         }
