@@ -19,7 +19,7 @@ int main(int argc, char *argv[]) {
         dst_paths.emplace_back(argv[i]);
     }
 
-    FolderSync folder_sync(".", dst_paths, true);
+    FolderSync folder_sync(".", dst_paths);
 
     folder_sync.findDiff();
 

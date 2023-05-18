@@ -22,12 +22,12 @@ int main() {
 //    vector<string> dst_paths = { dst_path1, dst_path2 };
 //    FolderSync folder_sync(src_path, dst_paths);
 
-#else  // 支持中文路径
+#else  // 中文路径
 
     // 千万注意不要写反了！！！dst path 中的文件可能会被删除！！！
     string src_path = R"(..\sample_folder\源)";
     string dst_path = R"(..\sample_folder\目标)";
-    FolderSync folder_sync(src_path, dst_path, true);  // W - true，表示使用宽字符
+    FolderSync folder_sync(src_path, dst_path);
 
 #endif
 

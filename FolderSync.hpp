@@ -47,17 +47,15 @@ private:
 
 class FolderSync {
 public:
-    FolderSync(std::string src_path, std::string dst_path, bool W = false)
-            : m_src_path(std::move(src_path)),
-              m_W(W) {
+    FolderSync(std::string src_path, std::string dst_path)
+            : m_src_path(std::move(src_path)) {
         m_dst_paths.emplace_back(std::move(dst_path));
         initSrcFolder();
     };
 
-    FolderSync(std::string src_path, std::vector<std::string> dst_paths, bool W = false)
+    FolderSync(std::string src_path, std::vector<std::string> dst_paths)
             : m_src_path(std::move(src_path)),
-              m_dst_paths(std::move(dst_paths)),
-              m_W(W) {
+              m_dst_paths(std::move(dst_paths)) {
         initSrcFolder();
     }
 
@@ -110,11 +108,7 @@ private:
 
         std::cout << "\n" << "-> src path: " << m_src_path << "\n" << std::endl;
 
-        if (m_W) {
-            buildFolderTreeW(m_src_folder);
-        } else {  // !W
-            buildFolderTree(m_src_folder);
-        }
+        buildFolderTreeW(m_src_folder);
     }
 
     /**
@@ -133,45 +127,7 @@ private:
 
         m_dst_folder = FolderObj(dst_path);
 
-        if (m_W) {
-            buildFolderTreeW(m_dst_folder);
-        } else {  // !W
-            buildFolderTree(m_dst_folder);
-        }
-    }
-
-    /**
-     * @brief 以树形结构构建文件夹对象
-     *
-     * @param folder 文件夹对象
-     * @return None
-     */
-    static void buildFolderTree(FolderObj &folder) {
-        long file_handle;  // 文件句柄
-        struct _finddata_t file_info{};  // 文件信息
-
-        std::string folder_path = folder.getPath();
-        std::string p;
-        if ((file_handle = _findfirst(p.assign(folder_path).append("*").c_str(), &file_info)) != -1) {
-            do {
-                if ((file_info.attrib & _A_SUBDIR)) {  // 表示子文件夹
-                    if (strcmp(file_info.name, ".") != 0 && strcmp(file_info.name, "..") != 0) {
-                        FolderObj sub_folder(p.assign(folder_path).append(file_info.name).append("\\"));
-                        buildFolderTree(sub_folder);  // 文件夹递归搜索
-                        folder.m_sub_folders.emplace_back(std::move(sub_folder));
-                    }
-                } else {  // (file_info.attrib & _A_SUBDIR) == 0，表示文件
-                    // 存储 <文件名，文件大小> 键值对
-                    folder.m_files.emplace(file_info.name, file_info.size);
-                }
-            } while (_findnext(file_handle, &file_info) == 0);  // 处理下一个，存在则返回 0，否则返回 -1
-            _findclose(file_handle);
-        }
-
-        // 对子文件夹对象进行排序
-        std::sort(folder.m_sub_folders.begin(), folder.m_sub_folders.end(), [](FolderObj &a, FolderObj &b) {
-            return a.getName() < b.getName();
-        });
+        buildFolderTreeW(m_dst_folder);
     }
 
     /**
@@ -213,8 +169,6 @@ private:
     /**
      * @brief 查找 两个文件夹对象中的 文件 和 子文件夹 的差异，并对 两个文件夹 的 同名子文件夹 进行递归查找
      *
-     * 调用 "del" 删除文件，调用 "copy" 复制文件
-     *
      * @param src_folder 源文件夹对象
      * @param dst_folder 目标文件夹对象
      * @param is_operate 是否对 文件/文件夹 进行操作
@@ -231,7 +185,7 @@ private:
             }
 
             if (is_operate) {  // update()
-                system(("del \"" + dst_folder.getPath() + dst_file.first + "\"").c_str());
+                DeleteFileW(string2wstring(dst_folder.getPath() + dst_file.first).c_str());
                 std::cout << "Deleted file: " << dst_folder.getPath() << dst_file.first << std::endl;
             } else {  // findDiff()
                 std::cout << "Old file: " << dst_folder.getPath() << dst_file.first << std::endl;
@@ -241,8 +195,8 @@ private:
         // 2. 查找新文件
         for (auto &i : _src_files) {
             if (is_operate) {  // update()
-                system(("copy \"" + src_folder.getPath() + i.first + "\" \"" + dst_folder.getPath() + i.first +
-                        "\"").c_str());
+                CopyFileW(string2wstring(src_folder.getPath() + i.first).c_str(),
+                          string2wstring(dst_folder.getPath() + i.first).c_str(), FALSE);
                 std::cout << "Added file: " << dst_folder.getPath() << i.first << std::endl;
             } else {  // findDiff()
                 std::cout << "New file: " << src_folder.getPath() << i.first << std::endl;
@@ -282,8 +236,6 @@ private:
     /**
      * @brief 新文件夹更改操作
      *
-     * 调用 "md" 创建文件夹，调用 "xcopy /S /E /Y" 复制文件夹内容
-     *
      * @param src_folder 源文件夹对象
      * @param dst_folder 目标文件夹对象
      * @param src_iter 源文件夹中的 新子文件夹对象 的迭代器
@@ -294,9 +246,8 @@ private:
     newFolder(FolderObj &src_folder, FolderObj &dst_folder, std::vector<FolderObj>::iterator &src_iter,
               bool is_operate) {
         if (is_operate) {  // update()
-            system(("md \"" + dst_folder.getPath() + src_iter->getName() + "\"").c_str());
-            system(("xcopy \"" + src_folder.getPath() + src_iter->getName() + "\" \"" + dst_folder.getPath() +
-                    src_iter->getName() + "\"" + "/S /E /Y").c_str());
+            copyFolderW(string2wstring(src_folder.getPath() + src_iter->getName() + "\\"),
+                        string2wstring(dst_folder.getPath() + src_iter->getName() + "\\"));
             std::cout << "Added folder: " << dst_folder.getPath() << src_iter->getName() << "\\" << std::endl;
         } else {  // findDiff()
             std::cout << "New folder: " << src_iter->getPath() << std::endl;
@@ -306,8 +257,6 @@ private:
     /**
      * @brief 旧文件夹更改操作
      *
-     * 调用 "re /s /q" 删除文件夹
-     *
      * @param dst_folder 目标文件夹对象
      * @param dst_iter 目标文件夹中的 旧子文件夹对象 的迭代器
      * @param is_operate 是否对 文件/文件夹 进行操作
@@ -315,7 +264,7 @@ private:
      */
     inline static void oldFolder(FolderObj &dst_folder, std::vector<FolderObj>::iterator &dst_iter, bool is_operate) {
         if (is_operate) {  // update()
-            system(("rd /s /q \"" + dst_folder.getPath() + dst_iter->getName() + "\"").c_str());
+            deleteFolderW(string2wstring(dst_folder.getPath() + dst_iter->getName() + "\\"));
             std::cout << "Deleted folder: " << dst_iter->getPath() << std::endl;
         } else {  // findDiff()
             std::cout << "Old folder: " << dst_iter->getPath() << std::endl;
@@ -350,14 +299,58 @@ private:
         return str;
     }
 
+    static void copyFolderW(const std::wstring &src_folder_path, const std::wstring &dst_folder_path) {
+        HANDLE file_handle;  // 文件句柄
+        WIN32_FIND_DATAW file_info;  // 文件信息
+
+        CreateDirectoryW((dst_folder_path).c_str(), nullptr);
+
+        std::wstring p;
+        if ((file_handle = FindFirstFileW(p.assign(src_folder_path).append(L"*").c_str(), &file_info)) !=
+            INVALID_HANDLE_VALUE) {
+            do {
+                if ((file_info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {  // 表示子文件夹
+                    if (wcscmp(file_info.cFileName, L".") != 0 && wcscmp(file_info.cFileName, L"..") != 0) {
+                        copyFolderW(src_folder_path + file_info.cFileName + L"\\",
+                                    dst_folder_path + file_info.cFileName + L"\\");
+                    }
+                } else {  // (file_info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0，表示文件
+                    CopyFileW((src_folder_path + file_info.cFileName).c_str(),
+                              (dst_folder_path + file_info.cFileName).c_str(), FALSE);
+                }
+            } while (FindNextFileW(file_handle, &file_info) != 0);  // 处理下一个，存在则返回值不为 0
+            FindClose(file_handle);
+        }
+    }
+
+    static void deleteFolderW(const std::wstring &folder_path) {
+        HANDLE file_handle;  // 文件句柄
+        WIN32_FIND_DATAW file_info;  // 文件信息
+
+        std::wstring p;
+        if ((file_handle = FindFirstFileW(p.assign(folder_path).append(L"*").c_str(), &file_info)) !=
+            INVALID_HANDLE_VALUE) {
+            do {
+                if ((file_info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {  // 表示子文件夹
+                    if (wcscmp(file_info.cFileName, L".") != 0 && wcscmp(file_info.cFileName, L"..") != 0) {
+                        deleteFolderW(folder_path + file_info.cFileName + L"\\");
+                    }
+                } else {  // (file_info.attrib & _A_SUBDIR) == 0，表示文件
+                    DeleteFileW((folder_path + file_info.cFileName).c_str());
+                }
+            } while (FindNextFileW(file_handle, &file_info) != 0);  // 处理下一个，存在则返回值不为 0
+            FindClose(file_handle);
+        }
+
+        RemoveDirectoryW((folder_path).c_str());
+    }
+
 private:
     std::string m_src_path;
     std::vector<std::string> m_dst_paths;
 
     FolderObj m_src_folder;
     FolderObj m_dst_folder;
-
-    bool m_W;
 };
 
 
