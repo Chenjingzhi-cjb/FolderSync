@@ -15,10 +15,9 @@
 
 class FolderObj {
 public:
-    FolderObj() = default;
-
     explicit FolderObj(std::string path)
             : m_path(std::move(path)) {
+        if (m_path.c_str()[m_path.length() - 1] != '\\') m_path.append("\\");  // FolderObj::m_path 以'\'结尾
         auto _path = m_path.substr(0, m_path.length() - 1);
         auto name_pos = _path.find_last_of('\\');
         m_name = _path.substr(name_pos + 1, _path.length() - 2);
@@ -48,14 +47,18 @@ private:
 class FolderSync {
 public:
     FolderSync(std::string src_path, std::string dst_path)
-            : m_src_path(std::move(src_path)) {
-        m_dst_paths.emplace_back(std::move(dst_path));
+            : m_src_path(std::move(src_path)),
+              m_dst_paths({std::move(dst_path)}),
+              m_src_folder(""),
+              m_dst_folder("") {
         initSrcFolder();
     };
 
     FolderSync(std::string src_path, std::vector<std::string> dst_paths)
             : m_src_path(std::move(src_path)),
-              m_dst_paths(std::move(dst_paths)) {
+              m_dst_paths(std::move(dst_paths)),
+              m_src_folder(""),
+              m_dst_folder("") {
         initSrcFolder();
     }
 
@@ -101,8 +104,9 @@ private:
      * @return None
      */
     void initSrcFolder() {
-        // 如果用户输入的目录地址不以'\'结尾，增加'\'结尾，FolderObj::m_path 均以'\'结尾
-        if (m_src_path.c_str()[-1] != '\\') m_src_path.append("\\");
+        // 如果用户输入的目录地址不以'\'结尾，增加'\'结尾
+        // FolderSync::m_path 和 FolderObj::m_path 均以'\'结尾
+        if (m_src_path.c_str()[m_src_path.length() - 1] != '\\') m_src_path.append("\\");
 
         m_src_folder = FolderObj(m_src_path);
 
@@ -118,7 +122,7 @@ private:
      * @return None
      */
     void initDstFolder(std::string dst_path) {
-        if (dst_path.c_str()[-1] != '\\') dst_path.append("\\");
+        if (dst_path.c_str()[dst_path.length() - 1] != '\\') dst_path.append("\\");
 
         if (m_src_path == dst_path) {
             std::cout << "initFolderSync() Error: The source and destination addresses must be different!" << std::endl;
