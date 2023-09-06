@@ -72,10 +72,11 @@ public:
      */
     void findDiff() {
         for (const auto &dst_path : m_dst_paths) {
-            initDstFolder(dst_path);
-            std::cout << "-------- dst path: " << dst_path << " --------" << std::endl;
-            findFilesDiff(m_src_folder, m_dst_folder, false);
-            std::cout << "---------------- check succeeded ----------------\n" << std::endl;
+            if (initDstFolder(dst_path)) {
+                std::cout << "-------- dst path: " << dst_path << " --------" << std::endl;
+                findFilesDiff(m_src_folder, m_dst_folder, false);
+                std::cout << "---------------- check succeeded ----------------\n" << std::endl;
+            }
         }
 
         std::cout << "All check completed!\n" << std::endl;
@@ -88,10 +89,11 @@ public:
      */
     void update() {
         for (const auto &dst_path : m_dst_paths) {
-            initDstFolder(dst_path);
-            std::cout << "-------- dst path: " << dst_path << " --------" << std::endl;
-            findFilesDiff(m_src_folder, m_dst_folder, true);
-            std::cout << "---------------- update succeeded ----------------\n" << std::endl;
+            if (initDstFolder(dst_path)) {
+                std::cout << "-------- dst path: " << dst_path << " --------" << std::endl;
+                findFilesDiff(m_src_folder, m_dst_folder, true);
+                std::cout << "---------------- update succeeded ----------------\n" << std::endl;
+            }
         }
 
         std::cout << "All update completed!\n" << std::endl;
@@ -119,19 +121,22 @@ private:
      * @brief 初始化 目标文件夹对象
      *
      * @param dst_path 目标文件路径
-     * @return None
+     * @return init status
      */
-    void initDstFolder(std::string dst_path) {
+    bool initDstFolder(std::string dst_path) {
         if (dst_path.c_str()[dst_path.length() - 1] != '\\') dst_path.append("\\");
 
         if (m_src_path == dst_path) {
             std::cout << "initFolderSync() Error: The source and destination addresses must be different!" << std::endl;
             std::cout << "    error folder: " << dst_path << "\n" << std::endl;
+            return false;
         }
 
         m_dst_folder = FolderObj(dst_path);
 
         buildFolderTreeW(m_dst_folder);
+
+        return true;
     }
 
     /**
